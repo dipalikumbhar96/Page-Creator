@@ -1,0 +1,22 @@
+[project]
+name = "page-creator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.139.0",
+    "httpx>=0.28.1",
+    "mcp>=1.28.1",
+    "pydantic>=2.13.4",
+    "sqlalchemy>=2.0.51",
+    "uvicorn[standard]>=0.50.2",
+]
+
+[project.scripts]
+page-creator = "page_creator:main"
+page-creator-mcp = "page_creator.mcp_server:main"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
