@@ -32,7 +32,7 @@ from __future__ import annotations
 import os
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 API_BASE_URL = os.environ.get("PAGE_CREATOR_API_URL", "http://127.0.0.1:8000")
 
@@ -103,7 +103,10 @@ async def list_pages(limit: int = 20) -> str:
     if not pages:
         return "No pages found yet."
 
-    lines = [f"- {p['title']}  ->  /pages/{p['url']}  (created {p['created_at']})" for p in pages]
+    lines = [
+        f"- {p['title']}  ->  /pages/{p['url']}  (created {p['created_at']})"
+        for p in pages
+    ]
     return "\n".join(lines)
 
 
