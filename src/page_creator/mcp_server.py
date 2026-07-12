@@ -17,26 +17,29 @@ is simply to:
   4. Persist the page via the FastAPI backend (POST /pages).
   5. Return the final page URL so the user can go check it.
 
-This talks to the FastAPI server over HTTP, so make sure the API is
-running first:
+This server talks to the database DIRECTLY (via crud.py / database.py) —
+it does NOT make an HTTP call to the FastAPI app in main.py. This means
+it works the same way whether it's run locally or deployed to a remote
+host: there's no "localhost:8000" to be unreachable, because there's no
+second process to reach.
 
-    uv run page-creator
-    # (or) uv run uvicorn page_creator.main:app --reload
-
-Then run this MCP server (stdio transport) and point your MCP client
-(e.g. Claude Desktop config) at it.
+(main.py / the FastAPI app is still there if you want a REST API or a
+browser-facing view of the same data — it shares the same SQLite DB —
+but the MCP server does not depend on it being up.)
 """
 
 from __future__ import annotations
 
-import os
-
-import httpx
 from fastmcp import FastMCP
 
-API_BASE_URL = os.environ.get("PAGE_CREATOR_API_URL", "http://127.0.0.1:8000")
+from . import crud, database
 
 mcp = FastMCP("page-creator")
+
+
+def _get_session() -> database.Session:
+    database.init_db()
+    return database.SessionLocal()
 
 
 @mcp.tool()
@@ -58,72 +61,47 @@ async def create_page(title: str, content: str = "", url: str = "") -> str:
         A confirmation message containing the page's URL/slug so the
         user can look it up.
     """
-    payload = {"title": title}
-    if content:
-        payload["content"] = content
-    if url:
-        payload["url"] = url
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            resp = await client.post(f"{API_BASE_URL}/pages", json=payload)
-            resp.raise_for_status()
-        except httpx.ConnectError:
-            return (
-                "Could not reach the Page Creator API at "
-                f"{API_BASE_URL}. Make sure it's running "
-                "(`uv run page-creator`) and try again."
-            )
-        except httpx.HTTPStatusError as e:
-            return f"Failed to create page: {e.response.status_code} {e.response.text}"
-
-    data = resp.json()
-    return (
-        f"Page created successfully.\n"
-        f"Title: {data['title']}\n"
-        f"URL: /pages/{data['url']}\n"
-        f"Created at: {data['created_at']}\n\n"
-        f"You can view it via GET {API_BASE_URL}/pages/{data['url']}"
-    )
+    db = _get_session()
+    try:
+        page = crud.create_page(db, title=title, content=content or None, url=url or None)
+        return (
+            f"Page created successfully.\n"
+            f"Title: {page.title}\n"
+            f"URL: /pages/{page.url}\n"
+            f"Created at: {page.created_at}"
+        )
+    except Exception as e:  # keep the tool resilient; surface the real error
+        return f"Failed to create page: {e}"
+    finally:
+        db.close()
 
 
 @mcp.tool()
 async def list_pages(limit: int = 20) -> str:
     """List recently created pages (title, url, created date)."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            resp = await client.get(f"{API_BASE_URL}/pages", params={"limit": limit})
-            resp.raise_for_status()
-        except httpx.ConnectError:
-            return f"Could not reach the Page Creator API at {API_BASE_URL}."
-        except httpx.HTTPStatusError as e:
-            return f"Failed to list pages: {e.response.status_code} {e.response.text}"
-
-    pages = resp.json()
-    if not pages:
-        return "No pages found yet."
-
-    lines = [
-        f"- {p['title']}  ->  /pages/{p['url']}  (created {p['created_at']})"
-        for p in pages
-    ]
-    return "\n".join(lines)
+    db = _get_session()
+    try:
+        pages = crud.list_pages(db, limit=limit)
+        if not pages:
+            return "No pages found yet."
+        return "\n".join(
+            f"- {p.title}  ->  /pages/{p.url}  (created {p.created_at})" for p in pages
+        )
+    finally:
+        db.close()
 
 
 @mcp.tool()
 async def get_page(url: str) -> str:
     """Fetch the full content of a page by its URL slug."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            resp = await client.get(f"{API_BASE_URL}/pages/{url}")
-        except httpx.ConnectError:
-            return f"Could not reach the Page Creator API at {API_BASE_URL}."
-
-    if resp.status_code == 404:
-        return f"No page found with url '{url}'."
-    resp.raise_for_status()
-    data = resp.json()
-    return f"# {data['title']}\n\n{data['content']}\n\n(Created: {data['created_at']})"
+    db = _get_session()
+    try:
+        page = crud.get_page_by_url(db, url)
+        if page is None:
+            return f"No page found with url '{url}'."
+        return f"# {page.title}\n\n{page.content}\n\n(Created: {page.created_at})"
+    finally:
+        db.close()
 
 
 def main() -> None:
