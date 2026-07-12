@@ -9,10 +9,10 @@ dependencies = [
     "fastmcp>=3.4.3",
     "httpx>=0.28.1",
     "mcp>=1.28.1",
+    "psycopg2-binary>=2.9.9",
     "pydantic>=2.13.4",
     "sqlalchemy>=2.0.51",
     "uvicorn[standard]>=0.50.2",
-    "psycopg2-binary"
 ]
 
 [project.scripts]
