@@ -29,7 +29,7 @@ _DB_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 _DB_DIR.mkdir(parents=True, exist_ok=True)
 _SQLITE_FALLBACK_URL = f"sqlite:///{_DB_DIR / 'pages.db'}"
 
-DATABASE_URL = "postgresql://postgres:Shivanya@2021@db.sbzixpbcxkwibhirjman.supabase.co:5432/postgres"
+DATABASE_URL = "postgresql://postgres:jYsHNBTNdxyuKIgW@db.sbzixpbcxkwibhirjman.supabase.co:5432/postgres"
 
 # Some hosts (e.g. Heroku-style providers) hand out URLs starting with
 # "postgres://", but SQLAlchemy 2.x requires the "postgresql://" scheme.
