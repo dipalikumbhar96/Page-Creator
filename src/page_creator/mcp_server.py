@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from fastmcp import FastMCP
 
-from . import crud, database
+from page_creator import crud, database
 
 mcp = FastMCP("page-creator")
 
