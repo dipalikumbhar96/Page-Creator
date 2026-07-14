@@ -9,6 +9,7 @@ from pathlib import Path
 
 from sqlalchemy import DateTime, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
 
 # Fallback SQLite path, used only when DATABASE_URL is not set (local dev).
 _DB_DIR = Path(__file__).resolve().parent.parent.parent / "data"
@@ -25,7 +26,15 @@ if DATABASE_URL.startswith("postgres://"):
 
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=_connect_args)
+print(engine,"engine")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+try:
+    # Attempt to open a connection and run a simple test query
+    with engine.connect() as connection:
+        print("✅ Database connection successful!")
+except SQLAlchemyError as e:
+    print(f"❌ Database connection failed!")
+    print(f"Error details: {e}")
 
 
 class Base(DeclarativeBase):
