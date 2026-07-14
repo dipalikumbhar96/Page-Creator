@@ -17,16 +17,21 @@ _DB_DIR.mkdir(parents=True, exist_ok=True)
 _SQLITE_FALLBACK_URL = f"sqlite:///{_DB_DIR / 'pages.db'}"
 
 # Read from environment; fall back to local SQLite if not set.
-DATABASE_URL = os.environ.get("DATABASE_URL", _SQLITE_FALLBACK_URL)
+# DATABASE_URL = os.environ.get("DATABASE_URL", _SQLITE_FALLBACK_URL)
+# PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent 
 
-# Some hosts (e.g. Heroku-style providers) hand out URLs starting with
-# "postgres://", but SQLAlchemy 2.x requires the "postgresql://" scheme.
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# Saves pages.db inside your project folder where uv has full write permissions
+DATABASE_URL = _SQLITE_FALLBACK_URL
+# DATABASE_URL = "postgresql://postgres.sbzixpbcxkwibhirjman:94rbPkBYGV98WstU@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+
+# # Some hosts (e.g. Heroku-style providers) hand out URLs starting with
+# # "postgres://", but SQLAlchemy 2.x requires the "postgresql://" scheme.
+# if DATABASE_URL.startswith("postgres://"):
+#     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=_connect_args)
-print(engine,"engine")
+print(DATABASE_URL,"abc")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 try:
     # Attempt to open a connection and run a simple test query
