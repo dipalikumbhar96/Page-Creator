@@ -87,6 +87,8 @@ async def list_pages(limit: int = 20) -> str:
         return "\n".join(
             f"- {p.title}  ->  /pages/{p.url}  (created {p.created_at})" for p in pages
         )
+    except Exception as e:
+        return f"Failed to list pages: {e}"
     finally:
         db.close()
 
@@ -100,9 +102,10 @@ async def get_page(url: str) -> str:
         if page is None:
             return f"No page found with url '{url}'."
         return f"# {page.title}\n\n{page.content}\n\n(Created: {page.created_at})"
+    except Exception as e:
+        return f"Failed to get page: {e}"
     finally:
         db.close()
-
 
 def main() -> None:
     mcp.run(transport="stdio")
