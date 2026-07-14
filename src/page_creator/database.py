@@ -12,16 +12,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sess
 from sqlalchemy.exc import SQLAlchemyError
 
 # Fallback SQLite path, used only when DATABASE_URL is not set (local dev).
-_DB_DIR = Path(__file__).resolve().parent.parent.parent / "data"
-_DB_DIR.mkdir(parents=True, exist_ok=True)
-_SQLITE_FALLBACK_URL = f"sqlite:///{_DB_DIR / 'pages.db'}"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+DEFAULT_LOCAL_URL = f"sqlite:///{PROJECT_ROOT}/pages.db"
+
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_LOCAL_URL)
 
 # Read from environment; fall back to local SQLite if not set.
 # DATABASE_URL = os.environ.get("DATABASE_URL", _SQLITE_FALLBACK_URL)
 # PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent 
 
 # Saves pages.db inside your project folder where uv has full write permissions
-DATABASE_URL = _SQLITE_FALLBACK_URL
 # DATABASE_URL = "postgresql://postgres.sbzixpbcxkwibhirjman:94rbPkBYGV98WstU@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
 
 # # Some hosts (e.g. Heroku-style providers) hand out URLs starting with
